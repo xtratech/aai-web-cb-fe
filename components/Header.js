@@ -122,7 +122,7 @@ const Header = () => {
       setStatusMessage('Starting processing...');
       await sleep(37000);
 
-      // Poll status 6 times, every 5 seconds
+      // Poll status 7 times, every 5 seconds
       let finalStatus = '';
       let lastStatus = '';
       let assistantTriggered = false;
@@ -136,7 +136,7 @@ const Header = () => {
           const { data } = await axios.get(`${trainingStatusUrl}?${params.toString()}`);
           const statusRaw = data?.status || '';
           const status = statusRaw.toLowerCase();
-          setStatusMessage(`Status check ${attempt}/6: ${statusRaw || 'unknown'}`);
+          setStatusMessage(`Status check ${attempt}/7: ${statusRaw || 'unknown'}`);
 
           // Trigger assistant training when transcript is downloaded (once)
           const isTranscriptDownloaded = status === 'transcriptdownloaded' || status === 'trascriptdownloaded';
@@ -168,6 +168,30 @@ const Header = () => {
                 { headers: { 'x-make-apikey': makeApiKey } }
               );
               kbTriggered = true;
+              // Do 7 quick status re-tries immediately after triggering KB
+              if (!finalStatus) {
+                for (let r = 1; r <= 7; r += 1) {
+                  try {
+                    const { data: pre } = await axios.get(`${trainingStatusUrl}?${params.toString()}`);
+                    const preRaw = pre?.status || '';
+                    const preLower = preRaw.toLowerCase();
+                    setStatusMessage(`KB quick check ${r}/7: ${preRaw || 'unknown'}`);
+                    if (preLower === 'completed') {
+                      finalStatus = 'completed';
+                      break;
+                    }
+                    if (preLower === 'failed') {
+                      finalStatus = 'failed';
+                      break;
+                    }
+                  } catch (preErr) {
+                    setStatusMessage(`KB quick check ${r}/7: error`);
+                  }
+                  if (r < 7) {
+                    await sleep(6000);
+                  }
+                }
+              }
             } catch (whErr) {
               setStatusMessage('Failed to trigger KB training webhook.');
               finalStatus = 'failed';
@@ -175,25 +199,27 @@ const Header = () => {
             }
 
             // After triggering KB training, poll specifically for 'Completed'
-            for (let a2 = 1; a2 <= 7; a2 += 1) {
-              try {
-                const { data: data2 } = await axios.get(`${trainingStatusUrl}?${params.toString()}`);
-                const s2Raw = data2?.status || '';
-                const s2 = s2Raw.toLowerCase();
-                setStatusMessage(`KB training check ${a2}/6: ${s2Raw || 'unknown'}`);
-                if (s2 === 'completed') {
-                  finalStatus = 'completed';
-                  break;
+            if (!finalStatus) {
+              for (let a2 = 1; a2 <= 7; a2 += 1) {
+                try {
+                  const { data: data2 } = await axios.get(`${trainingStatusUrl}?${params.toString()}`);
+                  const s2Raw = data2?.status || '';
+                  const s2 = s2Raw.toLowerCase();
+                  setStatusMessage(`KB training check ${a2}/7: ${s2Raw || 'unknown'}`);
+                  if (s2 === 'completed') {
+                    finalStatus = 'completed';
+                    break;
+                  }
+                  if (s2 === 'failed') {
+                    finalStatus = 'failed';
+                    break;
+                  }
+                } catch (pollErr2) {
+                  setStatusMessage(`KB training check ${a2}/7: error`);
                 }
-                if (s2 === 'failed') {
-                  finalStatus = 'failed';
-                  break;
+                if (a2 < 7) {
+                  await sleep(5000);
                 }
-              } catch (pollErr2) {
-                setStatusMessage(`KB training check ${a2}/6: error`);
-              }
-              if (a2 < 6) {
-                await sleep(5000);
               }
             }
             break; // Exit outer loop after KB polling
@@ -207,9 +233,9 @@ const Header = () => {
           // Update last status for transition detection
           lastStatus = status;
         } catch (pollErr) {
-          setStatusMessage(`Status check ${attempt}/6: error`);
+          setStatusMessage(`Status check ${attempt}/7: error`);
         }
-        if (attempt < 6) {
+        if (attempt < 7) {
           await sleep(5000);
         }
       }

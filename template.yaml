@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Deploys the hosting and authentication infrastructure for the Pluree Chatbot frontend.
+  This includes S3 for hosting, CloudFront for content delivery, and Cognito for user management.
+
+Parameters:
+  AppNamePrefix:
+    Type: String
+    Default: PlureeChatbot
+    Description: A prefix applied to all created resources (e.g., S3 bucket, Cognito pool).
+  
+  ExistingS3BucketName:
+    Type: String
+    Description: "The name of the existing S3 bucket that is configured for static website hosting."
+
+Resources:
+  # The S3 bucket resource has been removed. We now use the bucket name provided in the parameters.
+
+  # 2. Cognito User Pool to manage user sign-up and sign-in
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${AppNamePrefix}-UserPool"
+      UsernameAttributes:
+        - email
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+      AutoVerifiedAttributes:
+        - email
+
+  # 3. Cognito App Client for the React frontend to use
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${AppNamePrefix}-WebAppClient"
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthFlows:
+        - implicit
+        - code
+      AllowedOAuthScopes:
+        - phone
+        - email
+        - openid
+        - profile
+      CallbackURLs:
+        - http://localhost:3000/
+      LogoutURLs:
+        - http://localhost:3000/
+
+  # 4. CloudFront Distribution to serve the S3 content globally and via HTTPS
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        Origins:
+          # This now points to the existing S3 bucket's website endpoint
+          - DomainName: !Sub "${ExistingS3BucketName}.s3-website.${AWS::Region}.amazonaws.com"
+            Id: !Ref ExistingS3BucketName
+            CustomOriginConfig:
+              # Using CustomOriginConfig because we are pointing to the website endpoint URL
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+        DefaultCacheBehavior:
+          # The TargetOriginId must match the Id of the Origin above
+          TargetOriginId: !Ref ExistingS3BucketName
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          Compress: true
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+
+#############################
+#           Outputs         #
+#############################
+
+Outputs:
+  # The S3 bucket output has been removed as it's now an external resource.
+
+  CognitoUserPoolId:
+    Description: "ID of the Cognito User Pool."
+    Value: !Ref CognitoUserPool
+
+  CognitoUserPoolClientId:
+    Description: "ID of the Cognito User Pool Client."
+    Value: !Ref CognitoUserPoolClient
+
+  CloudFrontDistributionDomain:
+    Description: "Domain name of the CloudFront distribution."
+    Value: !GetAtt CloudFrontDistribution.DomainName

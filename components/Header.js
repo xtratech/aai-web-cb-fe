@@ -3,7 +3,7 @@
 // src/components/Header.js
 import React, { useCallback, useMemo, useState } from 'react';
 import axios from 'axios';
-import { getCurrentUser } from 'aws-amplify/auth';
+import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
 
 const Header = () => {
   const [videoUrl, setVideoUrl] = useState('');
@@ -48,13 +48,22 @@ const Header = () => {
       return;
     }
 
-    // Resolve Cognito user id for status polling
+    // Resolve Cognito user id for status polling (prefer token 'sub')
     let cognitoId = 'xyz';
     try {
-      const user = await getCurrentUser();
-      if (user?.userId) cognitoId = user.userId;
+      const session = await fetchAuthSession();
+      const sub = session?.tokens?.idToken?.payload?.sub;
+      if (sub) cognitoId = sub;
     } catch (e) {
-      // Fallback to default if not available
+      // ignore and fallback
+    }
+    if (cognitoId === 'xyz') {
+      try {
+        const user = await getCurrentUser();
+        if (user?.userId) cognitoId = user.userId;
+      } catch (e) {
+        // Fallback to default if not available
+      }
     }
 
     try {

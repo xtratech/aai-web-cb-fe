@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { getCurrentUser } from 'aws-amplify/auth';
+import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
 
 import Header from './Header';
 import Footer from './Footer';
@@ -43,9 +43,19 @@ const Chatbot = () => {
     setUserId(currentUserId);
   }, []);
 
-  // Resolve Cognito user id (logged-in user)
+  // Resolve Cognito user id (logged-in user). Prefer token 'sub', fallback to userId
   useEffect(() => {
     const resolveUser = async () => {
+      try {
+        const session = await fetchAuthSession();
+        const sub = session?.tokens?.idToken?.payload?.sub;
+        if (sub) {
+          setCogUserId(sub);
+          return;
+        }
+      } catch (_) {
+        // ignore
+      }
       try {
         const user = await getCurrentUser();
         if (user?.userId) setCogUserId(user.userId);
@@ -78,12 +88,14 @@ const Chatbot = () => {
 
   // Compute assistant mapping based on Cognito user id
   const getAssistantIdForUser = (sub) => {
-    const map = {
-      [process.env.NEXT_PUBLIC_COGID_OTAVIO]: process.env.NEXT_PUBLIC_ASSID_OTAVIO,
-      [process.env.NEXT_PUBLIC_COGID_MARTINA]: process.env.NEXT_PUBLIC_ASSID_MARTINA,
-      [process.env.NEXT_PUBLIC_COGID_CLAUDIA]: process.env.NEXT_PUBLIC_ASSID_CLAUDIA,
-    };
-    return map[sub];
+    const pairs = [
+      [process.env.NEXT_PUBLIC_COGID_OTAVIO, process.env.NEXT_PUBLIC_ASSID_OTAVIO],
+      [process.env.NEXT_PUBLIC_COGID_MARTINA, process.env.NEXT_PUBLIC_ASSID_MARTINA],
+      [process.env.NEXT_PUBLIC_COGID_CLAUDIA, process.env.NEXT_PUBLIC_ASSID_CLAUDIA],
+      [process.env.NEXT_PUBLIC_COGID_INFO, process.env.NEXT_PUBLIC_ASSID_INFO],
+    ];
+    const map = Object.fromEntries(pairs.filter(([k, v]) => k && v));
+    return sub ? map[sub] : undefined;
   };
 
   const handleSendMessage = async (text) => {
@@ -98,15 +110,30 @@ const Chatbot = () => {
       let assistantId = getAssistantIdForUser(cogUserId);
       let keyVal = cogUserId;
       if (!assistantId || !keyVal) {
+        // Try reading 'sub' from ID token first
         try {
-          const user = await getCurrentUser();
-          if (user?.userId) {
-            setCogUserId(user.userId);
-            if (!assistantId) assistantId = getAssistantIdForUser(user.userId);
-            if (!keyVal) keyVal = user.userId;
+          const session = await fetchAuthSession();
+          const sub = session?.tokens?.idToken?.payload?.sub;
+          if (sub) {
+            setCogUserId(sub);
+            if (!assistantId) assistantId = getAssistantIdForUser(sub);
+            if (!keyVal) keyVal = sub;
           }
         } catch (_) {
-          // ignore, proceed with available identifiers
+          // ignore
+        }
+        // Fallback to getCurrentUser
+        if (!assistantId || !keyVal) {
+          try {
+            const user = await getCurrentUser();
+            if (user?.userId) {
+              setCogUserId(user.userId);
+              if (!assistantId) assistantId = getAssistantIdForUser(user.userId);
+              if (!keyVal) keyVal = user.userId;
+            }
+          } catch (_) {
+            // ignore, proceed with available identifiers
+          }
         }
       }
       const payload = {

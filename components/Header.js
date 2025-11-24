@@ -20,6 +20,10 @@ const Header = () => {
   const kbWebhookUrl = useMemo(
     () => process.env.NEXT_PUBLIC_MAKE_TRAIN_KB_WEBHOOK_URL,
     []
+  );  
+  const transcriptWebhookUrl = useMemo(
+    () => process.env.NEXT_PUBLIC_MAKE_TRAIN_TRANSCRIPT_WEBHOOK_URL,
+    []
   );
   const resetWebhookUrl = useMemo(
     () => process.env.NEXT_PUBLIC_MAKE_RESET_WEBHOOK_URL,
@@ -135,6 +139,7 @@ const Header = () => {
       let finalStatus = '';
       let lastStatus = '';
       let assistantTriggered = false;
+      let transcriptTriggered = false;
       let kbTriggered = false;
       for (let attempt = 1; attempt <= 7; attempt += 1) {
         try {
@@ -165,18 +170,18 @@ const Header = () => {
             }
           }
 
-          // When status changes from TranscriptDownloaded -> PersonaUploaded, trigger KB
+          // When status changes from TranscriptDownloaded -> PersonaUploaded, trigger transcript
           const wasTranscript = lastStatus === 'transcriptdownloaded' || lastStatus === 'trascriptdownloaded';
           const isPersonaUploaded = status === 'personauploaded';
-          if (wasTranscript && isPersonaUploaded && kbWebhookUrl && !kbTriggered) {
+          if (wasTranscript && isPersonaUploaded && transcriptWebhookUrl && !transcriptTriggered) {
             try {
               setStatusMessage('Persona uploaded. Triggering KB training...');
               await axios.post(
-                kbWebhookUrl,
+                transcriptWebhookUrl,
                 payload,
                 { headers: { 'x-make-apikey': makeApiKey } }
               );
-              kbTriggered = true;
+              transcriptTriggered = true;
               // Do 7 quick status re-tries immediately after triggering KB
               if (!finalStatus) {
                 for (let r = 1; r <= 7; r += 1) {

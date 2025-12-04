@@ -12,11 +12,11 @@ export default function HomePage() {
   return (
     <Authenticator>
       {({ signOut }) => (
-        <div className="h-dvh max-h-dvh w-full bg-[var(--off-white)]">
+        <div className="h-dvh max-h-dvh w-full bg-[var(--canvas)]">
           <div className="absolute top-4 right-4 z-10">
             <button
               onClick={signOut}
-              className="group flex items-center justify-center p-2 bg-[var(--rich-burgundy)] hover:bg-[var(--dark-ruby)] text-[var(--off-white)] rounded-full shadow-lg transition-all duration-300 ease-in-out focus:outline-none"
+              className="group flex items-center justify-center p-2 bg-[var(--ink-purple)] hover:bg-[var(--deep-blue)] text-[var(--limoncello)] rounded-full shadow-lg transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--signature-lilac)] focus:ring-offset-2 focus:ring-offset-[var(--pure-white)]"
               title="Sign Out"
             >
               <svg

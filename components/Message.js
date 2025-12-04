@@ -6,14 +6,14 @@ import ReactMarkdown from 'react-markdown'; // Import the library
 
 const Message = ({ sender, text, isLoading = false }) => {
   const isUser = sender === 'user';
-  const userStyles = 'bg-[var(--bright-red)] text-[var(--off-white)] self-end rounded-xl rounded-br-none';
-  const botStyles = 'bg-white text-gray-800 self-start rounded-xl rounded-bl-none prose'; 
+  const userStyles = 'bg-[var(--limoncello)] text-[var(--ink-purple)] self-end rounded-xl rounded-br-none shadow-sm';
+  const botStyles = 'bg-[var(--pure-white)] text-[var(--text-primary)] border border-[var(--border-soft)] self-start rounded-xl rounded-bl-none prose'; 
 
   const loadingDots = (
     <div className="flex space-x-1">
-      <span className="w-2 h-2 bg-[var(--deep-rose-red)] rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-      <span className="w-2 h-2 bg-[var(--deep-rose-red)] rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-      <span className="w-2 h-2 bg-[var(--deep-rose-red)] rounded-full animate-bounce"></span>
+      <span className="w-2 h-2 bg-[var(--signature-lilac)] rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+      <span className="w-2 h-2 bg-[var(--signature-lilac)] rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+      <span className="w-2 h-2 bg-[var(--signature-lilac)] rounded-full animate-bounce"></span>
     </div>
   );
 

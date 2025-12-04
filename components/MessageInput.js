@@ -50,10 +50,10 @@ const MessageInput = ({ onSendMessage, disabled, inputRef, userMessages }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-16 items-end border-t border-gray-300/50 bg-[var(--off-white)]">
+    <form onSubmit={handleSubmit} className="flex min-h-16 items-end border-t border-[rgba(54,43,109,0.08)] bg-[var(--pure-white)] shadow-[0_-10px_30px_rgba(54,43,109,0.06)]">
       <textarea
         ref={inputRef}
-        className="field-sizing-content flex w-full border-input bg-transparent text-base transition-colors disabled:cursor-not-allowed my-auto max-h-40 min-h-8 resize-none rounded-none border-0 placeholder-zinc-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-3 shadow-none flex-1 font-medium"
+        className="field-sizing-content flex w-full border-input bg-transparent text-base transition-colors disabled:cursor-not-allowed my-auto max-h-40 min-h-8 resize-none rounded-none border-0 placeholder-[#8b83b4] focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-3 shadow-none flex-1 font-medium text-[var(--text-primary)]"
         placeholder="Message..."
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -65,7 +65,7 @@ const MessageInput = ({ onSendMessage, disabled, inputRef, userMessages }) => {
       <button
         type="submit"
         disabled={disabled || !text.trim()}
-        className="flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-all duration-200 mr-3 mb-2 size-9 bg-transparent hover:bg-gray-200/50 disabled:opacity-50 disabled:hover:bg-transparent"
+        className="flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold transition-all duration-200 mr-3 mb-2 size-10 bg-[var(--ink-purple)] text-[var(--limoncello)] hover:bg-[var(--deep-blue)] disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-400 shadow-md hover:shadow-lg"
       >
         <SendIcon enabled={!disabled && text.trim()} />
       </button>

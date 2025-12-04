@@ -16,7 +16,7 @@ import ErrorDisplay from './ErrorDisplay'; // b1i6og0401.execute-api.ap-southeas
 const API_ENDPOINT =
   process.env.NEXT_PUBLIC_CHATBASE_PROXY_API_ENDPOINT ||
   process.env.NEXT_PUBLIC_API_ENDPOINT ||
-  'https://75qd645wxd.execute-api.ap-southeast-1.amazonaws.com/Prod/chat';
+  'https://q3gtzcnzc7.execute-api.ap-southeast-1.amazonaws.com/Prod/chat';
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -139,6 +139,8 @@ const Chatbot = () => {
       const payload = {
         userId: userId,
         message: text,
+        llm: 'gemini',
+        llm_model: 'gemini-2.5-flash'
       };
       if (assistantId) payload.assistant_id = assistantId;
       if (keyVal) payload.key = keyVal;
@@ -155,7 +157,7 @@ const Chatbot = () => {
   };
 
   return (
-    <main className="group relative flex h-full flex-col bg-[var(--off-white)]">
+    <main className="group relative flex h-full flex-col bg-[var(--panel)]">
       <Header />
       <div className="relative flex-1 basis-full overflow-y-hidden scroll-smooth flex flex-col shadow-inner shadow-gray-400/20">
         <MessageList messages={messages} isLoading={isLoading} />

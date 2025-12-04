@@ -272,14 +272,14 @@ const Header = () => {
   
 
   return (
-    <header className="relative flex flex-col px-5 text-[var(--off-white)] bg-[var(--dark-ruby-two)]">
+    <header className="relative flex flex-col px-5 text-[var(--pure-white)] bg-[var(--ink-purple)] border-b border-[rgba(240,233,100,0.3)]">
       <div className="my-4">
-        <h1 className="font-bold text-lg tracking-wide">Anim AI - POC 1</h1>
+        <h1 className="font-semibold text-xl leading-tight text-[var(--limoncello)] tracking-tight">Humanello - POC 1</h1>
       </div>
       <div className="mb-4 w-full">
         <form className="flex w-full max-w-xl flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="video-url" className="text-sm font-medium">Video Url</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="video-url" className="text-xs font-semibold uppercase tracking-[0.08em] text-white/70">Video Url</label>
             <input
               id="video-url"
               name="video-url"
@@ -288,11 +288,11 @@ const Header = () => {
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
               disabled={isBusy}
-              className="w-full rounded-md border border-transparent bg-white/95 px-3 py-2 text-sm text-[var(--dark-ruby-two)] placeholder-gray-500 shadow-sm focus:border-[var(--rich-burgundy)] focus:outline-none focus:ring-2 focus:ring-[var(--rich-burgundy)]"
+              className="w-full rounded-md border border-[rgba(49,174,196,0.45)] bg-white/10 px-3 py-2 text-sm text-[var(--pure-white)] placeholder-white/70 shadow-sm focus:border-[var(--signature-lilac)] focus:outline-none focus:ring-2 focus:ring-[var(--signature-lilac)] focus:ring-offset-2 focus:ring-offset-[var(--ink-purple)]"
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="instagram-handle" className="text-sm font-medium">Instagram Handle</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="instagram-handle" className="text-xs font-semibold uppercase tracking-[0.08em] text-white/70">Instagram Handle</label>
             <input
               id="instagram-handle"
               name="instagram-handle"
@@ -301,16 +301,16 @@ const Header = () => {
               value={instagram}
               onChange={(e) => setInstagram(e.target.value)}
               disabled={isBusy}
-              className="w-full rounded-md border border-transparent bg-white/95 px-3 py-2 text-sm text-[var(--dark-ruby-two)] placeholder-gray-500 shadow-sm focus:border-[var(--rich-burgundy)] focus:outline-none focus:ring-2 focus:ring-[var(--rich-burgundy)]"
+              className="w-full rounded-md border border-[rgba(49,174,196,0.45)] bg-white/10 px-3 py-2 text-sm text-[var(--pure-white)] placeholder-white/70 shadow-sm focus:border-[var(--signature-lilac)] focus:outline-none focus:ring-2 focus:ring-[var(--signature-lilac)] focus:ring-offset-2 focus:ring-offset-[var(--ink-purple)]"
             />
           </div>
           {error && (
-            <div className="text-sm text-red-200 bg-red-800/60 px-3 py-2 rounded">
+            <div className="text-sm text-[var(--ink-purple)] bg-[rgba(240,233,100,0.9)] px-3 py-2 rounded-md shadow-sm border border-[rgba(54,43,109,0.2)]">
               {error}
             </div>
           )}
           {statusMessage && (
-            <div className="text-sm text-amber-200 bg-amber-800/60 px-3 py-2 rounded">
+            <div className="text-sm text-[var(--ink-purple)] bg-[rgba(200,115,244,0.14)] px-3 py-2 rounded-md shadow-sm border border-[rgba(200,115,244,0.35)]">
               {statusMessage}{isBusy ? ' ...' : ''}
             </div>
           )}
@@ -319,7 +319,7 @@ const Header = () => {
               type="button"
               onClick={handleInitiateTraining}
               disabled={isBusy}
-              className="rounded-md bg-[var(--rich-burgundy)] px-4 py-2 text-sm font-semibold text-[var(--off-white)] shadow hover:bg-[var(--dark-ruby)] disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--rich-burgundy)] focus:ring-offset-[var(--dark-ruby-two)]"
+              className="rounded-md bg-[var(--limoncello)] px-4 py-2 text-sm font-semibold text-[var(--ink-purple)] shadow-md hover:bg-[#e6df5c] disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--signature-lilac)] focus:ring-offset-[var(--ink-purple)]"
             >
               Initiate Training
             </button>

@@ -16,7 +16,7 @@ import ErrorDisplay from './ErrorDisplay'; // b1i6og0401.execute-api.ap-southeas
 const API_ENDPOINT =
   process.env.NEXT_PUBLIC_CHATBASE_PROXY_API_ENDPOINT ||
   process.env.NEXT_PUBLIC_API_ENDPOINT ||
-  'https://q3gtzcnzc7.execute-api.ap-southeast-1.amazonaws.com/Prod/chat';
+  'https://2myil9mii3.execute-api.ap-southeast-1.amazonaws.com/Prod/chat';
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -78,11 +78,18 @@ const Chatbot = () => {
   useEffect(() => {
     const onStart = () => setIsTraining(true);
     const onEnd = () => setIsTraining(false);
+    const onStatus = (event) => {
+      const text = event?.detail?.message;
+      if (!text) return;
+      setMessages(prev => [...prev, { id: uuidv4(), text: `Training status: ${text}`, sender: 'bot' }]);
+    };
     window.addEventListener('ai-training-start', onStart);
     window.addEventListener('ai-training-end', onEnd);
+    window.addEventListener('ai-training-status', onStatus);
     return () => {
       window.removeEventListener('ai-training-start', onStart);
       window.removeEventListener('ai-training-end', onEnd);
+      window.removeEventListener('ai-training-status', onStatus);
     };
   }, []);
 
@@ -136,8 +143,9 @@ const Chatbot = () => {
           }
         }
       }
+      const userIdentifier = keyVal || userId;
       const payload = {
-        userId: userId,
+        userId: userIdentifier,
         message: text,
         llm: 'gemini',
         llm_model: 'gemini-2.5-flash'

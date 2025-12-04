@@ -7,7 +7,6 @@ import { getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
 
 const Header = () => {
   const [videoUrl, setVideoUrl] = useState('');
-  const [instagram, setInstagram] = useState('');
   const [error, setError] = useState('');
   const [isBusy, setIsBusy] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
@@ -25,6 +24,10 @@ const Header = () => {
     () => process.env.NEXT_PUBLIC_MAKE_TRAIN_TRANSCRIPT_WEBHOOK_URL,
     []
   );
+  const trainGeminiEndpoint = useMemo(
+    () => process.env.NEXT_PUBLIC_TRAIN_GEMINI_API_ENDPOINT,
+    []
+  );
   const resetWebhookUrl = useMemo(
     () => process.env.NEXT_PUBLIC_MAKE_RESET_WEBHOOK_URL,
     []
@@ -40,6 +43,11 @@ const Header = () => {
   const cognitoField = useMemo(() => process.env.NEXT_PUBLIC_COGNITO_FIELD || 'CognitoID', []);
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const emitTrainingStatus = (message) => {
+    try {
+      window.dispatchEvent(new CustomEvent('ai-training-status', { detail: { message } }));
+    } catch (_) {}
+  };
 
   const handleInitiateTraining = useCallback(async () => {
     if (isBusy) return;
@@ -76,7 +84,6 @@ const Header = () => {
       // Build payload once to keep both webhooks in sync
       const payload = {
         videourl: videoUrl.trim(),
-        instagram: instagram?.trim?.() || '',
         key: cognitoId
       };
       // First, perform a re-set before starting training (if configured)
@@ -133,14 +140,14 @@ const Header = () => {
 
       // Show loader and wait 37 seconds
       setStatusMessage('Starting processing...');
-      await sleep(37000);
+      await sleep(33000);
 
       // Poll status 7 times, every 5 seconds
       let finalStatus = '';
       let lastStatus = '';
       let assistantTriggered = false;
+      let geminiTriggered = false;
       let transcriptTriggered = false;
-      let kbTriggered = false;
       for (let attempt = 1; attempt <= 7; attempt += 1) {
         try {
           const params = new URLSearchParams({ key: cognitoId });
@@ -152,8 +159,31 @@ const Header = () => {
           const status = statusRaw.toLowerCase();
           setStatusMessage(`Status check ${attempt}/7: ${statusRaw || 'unknown'}`);
 
-          // Trigger assistant training when transcript is downloaded (once)
+          // When transcript is downloaded, trigger Gemini cache prep and assistant training (once)
           const isTranscriptDownloaded = status === 'transcriptdownloaded' || status === 'trascriptdownloaded';
+          if (isTranscriptDownloaded && trainGeminiEndpoint && !geminiTriggered) {
+            try {
+              setStatusMessage('Priming Gemini cache...');
+              await axios.post(
+                trainGeminiEndpoint,
+                {
+                  llm: 'gemini',
+                  llm_model: 'gemini-2.5-flash',
+                  user_id: cognitoId,
+                  system_prompt: '',
+                  ttl_minutes: 10080,
+                  cache_display_name: 'company_knowledge_v1'
+                }
+              );
+              geminiTriggered = true;
+            } catch (gemErr) {
+              setStatusMessage('Gemini cache priming failed.');
+            }
+          }
+
+
+          /* 
+
           if (isTranscriptDownloaded && assistantWebhookUrl && !assistantTriggered) {
             try {
               setStatusMessage('Transcript downloaded. Triggering assistant training...');
@@ -244,22 +274,38 @@ const Header = () => {
             break;
           }
 
+          */
+
+          if (status === 'transcriptdownloaded' || status === 'failed') {
+            finalStatus = status;
+            break;
+          }
+
           // Update last status for transition detection
           lastStatus = status;
         } catch (pollErr) {
           setStatusMessage(`Status check ${attempt}/7: error`);
         }
-        if (attempt < 7) {
+        if (attempt < 2) {
           await sleep(5000);
         }
       }
 
+      const trainingSucceeded = finalStatus === 'transcriptdownloaded' || finalStatus === 'transcriptdownloaded';
+      let geminiPrimeFailed = false;
+
       if (!finalStatus) {
-        setStatusMessage('Still processing. Please check again later.');
-      } else if (finalStatus === 'completed' || finalStatus === 'complete') {
-        setStatusMessage('Training completed successfully.');
+        const msg = 'Still processing. Please check again later.';
+        setStatusMessage(msg);
+        emitTrainingStatus(msg);
+      } else if (trainingSucceeded) {
+        const msg = geminiPrimeFailed ? 'Training completed, but Gemini cache priming failed.' : 'Training completed successfully.';
+        setStatusMessage(msg);
+        emitTrainingStatus(msg);
       } else if (finalStatus === 'failed') {
-        setStatusMessage('Training failed. Please try again.');
+        const msg = 'Training failed. Please try again.';
+        setStatusMessage(msg);
+        emitTrainingStatus(msg);
       }
     } catch (err) {
       setError('Failed to initiate training. Please try again.');
@@ -267,7 +313,7 @@ const Header = () => {
       setIsBusy(false);
       try { window.dispatchEvent(new Event('ai-training-end')); } catch (_) {}
     }
-  }, [airtableBaseId, airtableTableId, cognitoField, instagram, isBusy, makeApiKey, resetWebhookUrl, statusBaseUrl, trainingStatusUrl, videoUrl, webhookUrl]);
+  }, [airtableBaseId, airtableTableId, cognitoField, isBusy, makeApiKey, resetWebhookUrl, statusBaseUrl, trainingStatusUrl, videoUrl, webhookUrl]);
 
   
 
@@ -291,26 +337,13 @@ const Header = () => {
               className="w-full rounded-md border border-[rgba(49,174,196,0.45)] bg-white/10 px-3 py-2 text-sm text-[var(--pure-white)] placeholder-white/70 shadow-sm focus:border-[var(--signature-lilac)] focus:outline-none focus:ring-2 focus:ring-[var(--signature-lilac)] focus:ring-offset-2 focus:ring-offset-[var(--ink-purple)]"
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="instagram-handle" className="text-xs font-semibold uppercase tracking-[0.08em] text-white/70">Instagram Handle</label>
-            <input
-              id="instagram-handle"
-              name="instagram-handle"
-              type="text"
-              placeholder="@yourhandle"
-              value={instagram}
-              onChange={(e) => setInstagram(e.target.value)}
-              disabled={isBusy}
-              className="w-full rounded-md border border-[rgba(49,174,196,0.45)] bg-white/10 px-3 py-2 text-sm text-[var(--pure-white)] placeholder-white/70 shadow-sm focus:border-[var(--signature-lilac)] focus:outline-none focus:ring-2 focus:ring-[var(--signature-lilac)] focus:ring-offset-2 focus:ring-offset-[var(--ink-purple)]"
-            />
-          </div>
           {error && (
             <div className="text-sm text-[var(--ink-purple)] bg-[rgba(240,233,100,0.9)] px-3 py-2 rounded-md shadow-sm border border-[rgba(54,43,109,0.2)]">
               {error}
             </div>
           )}
           {statusMessage && (
-            <div className="text-sm text-[var(--ink-purple)] bg-[rgba(200,115,244,0.14)] px-3 py-2 rounded-md shadow-sm border border-[rgba(200,115,244,0.35)]">
+            <div className="text-sm text-[var(--pure-white)] bg-[rgba(200,115,244,0.14)] px-3 py-2 rounded-md shadow-sm border border-[rgba(200,115,244,0.35)]">
               {statusMessage}{isBusy ? ' ...' : ''}
             </div>
           )}

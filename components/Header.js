@@ -276,7 +276,7 @@ const Header = () => {
 
           */
 
-          if (status === 'transcriptdownloaded' || status === 'failed') {
+          if (status === 'transcriptdownloaded' || status === 'completed' || status === 'failed') {
             finalStatus = status;
             break;
           }
@@ -291,7 +291,7 @@ const Header = () => {
         }
       }
 
-      const trainingSucceeded = finalStatus === 'transcriptdownloaded' || finalStatus === 'transcriptdownloaded';
+      const trainingSucceeded = finalStatus === 'transcriptdownloaded' || finalStatus === 'completed';
       let geminiPrimeFailed = false;
 
       if (!finalStatus) {

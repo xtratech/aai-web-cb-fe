@@ -276,7 +276,13 @@ const Header = () => {
 
           */
 
-          if (status === 'transcriptdownloaded' || status === 'completed' || status === 'failed') {
+          const isSuccessLike =
+            status === 'transcriptdownloaded' ||
+            status === 'completed' ||
+            status.startsWith('completed') ||
+            status.startsWith('complete') ||
+            status.includes('success');
+          if (isSuccessLike || status === 'failed') {
             finalStatus = status;
             break;
           }
@@ -291,7 +297,12 @@ const Header = () => {
         }
       }
 
-      const trainingSucceeded = finalStatus === 'transcriptdownloaded' || finalStatus === 'completed';
+      const trainingSucceeded =
+        finalStatus === 'transcriptdownloaded' ||
+        finalStatus === 'completed' ||
+        finalStatus?.startsWith('completed') ||
+        finalStatus?.startsWith('complete') ||
+        finalStatus?.includes('success');
       let geminiPrimeFailed = false;
 
       if (!finalStatus) {

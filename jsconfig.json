@@ -5,5 +5,7 @@
       "@/components/*": ["components/*"],
       "@/lib/*": ["lib/*"]
     }
+
   }
+
 }

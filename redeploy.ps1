@@ -54,6 +54,7 @@ aws cloudformation deploy `
     "DeploymentTimestamp=$env:DEPLOYMENT_TIMESTAMP" `
     "ExistingS3BucketName=$env:EXISTING_BUCKET"
 
+
 Write-Output "Cleaning up..."
 
 # Remove-Item -Recurse -Force "./packages"
